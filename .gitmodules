@@ -1,0 +1,3 @@
+[submodule "lambda/models"]
+  path = lambda/models
+  url = https://github.com/thiagofmiranda/machine-learning-models.git
