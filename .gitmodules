@@ -1,1 +1,4 @@
 
+[submodule "lambda/src/machine-learning-models"]
+	path = lambda/src/machine-learning-models
+	url = https://github.com/thiagofmiranda/machine-learning-models
