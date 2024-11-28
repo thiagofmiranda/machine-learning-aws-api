@@ -1,6 +1,6 @@
 ## Project Description
 
-This project aims to create a Python API using FastAPI and deploy it to AWS using AWS Lambda. The application is containerized using Docker to provide an isolated and reproducible development environment. AWS SAM CLI is utilized for local testing, building, and deploying the serverless application to AWS. The project demonstrates how to efficiently build and deploy a scalable API with FastAPI on AWS Lambda, leveraging the simplicity and flexibility of Docker and AWS serverless services.
+This project aims to create a Python API using FastAPI and deploy it to AWS using AWS Lambda, and it is designed to serve predictions based on models imported from an external repository: [Machine Learning Models Repository](https://github.com/thiagofmiranda/machine-learning-models). The application is containerized using Docker to provide an isolated and reproducible development environment. AWS SAM CLI is utilized for local testing, building, and deploying the serverless application to AWS. The project demonstrates how to efficiently build and deploy a scalable API with FastAPI on AWS Lambda, leveraging the simplicity and flexibility of Docker and AWS serverless services.
 
 ## Requirements
 
