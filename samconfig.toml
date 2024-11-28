@@ -1,0 +1,12 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "fastapi-lambda-stack"
+s3_bucket = "thiagofmiranda-bucket-test"
+s3_prefix = "fastapi-lambda-stack"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+image_repositories = ["FastAPILambdaFunction=336974695493.dkr.ecr.us-east-1.amazonaws.com/thiagofmiranda-lambda-api-repository"]
+resolve_s3 = true
+confirm_changeset = true
+disable_rollback = true

@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  FastAPILambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Timeout: 30
+      Policies: AWSLambdaBasicExecutionRole
+      Events:
+        FastAPIProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}  # Redireciona todas as rotas para a Lambda
+            Method: ANY      # Permite todos os métodos HTTP
+    Metadata:
+      Dockerfile: Dockerfile   # Caminho relativo para o Dockerfile
+      DockerContext: ./lambda          # Diretório de contexto para o build
+      DockerTag: fastapi-lambda

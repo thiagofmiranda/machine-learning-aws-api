@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  FastAPILambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+      - x86_64
+      Timeout: 30
+      Policies: AWSLambdaBasicExecutionRole
+      Events:
+        FastAPIProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+      ImageUri: fastapilambdafunction:fastapi-lambda
+    Metadata:
+      DockerContext: C:\Users\thiag\Documents\portfolio\machine-learning-aws-api\lambda
+      DockerTag: fastapi-lambda
+      Dockerfile: Dockerfile
+      SamResourceId: FastAPILambdaFunction
