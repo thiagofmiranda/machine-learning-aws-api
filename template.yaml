@@ -1,22 +1,44 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
+AWSTemplateFormatVersion: '2010-09-09'  # Specifies the version of the CloudFormation template format
 
-Resources:
-  FastAPILambdaFunction:
-    Type: AWS::Serverless::Function
+Transform: AWS::Serverless-2016-10-31  # Tells AWS that this is a SAM template and enables SAM-specific functionality
+
+Resources:  # This section defines all the resources that will be created in AWS
+  FastAPIProxyApi:  # Define the API Gateway separately
+    Type: AWS::Serverless::Api
     Properties:
-      PackageType: Image
+      StageName: dev  # Specify the stage name (e.g., dev, prod) for the API
+      MinimumCompressionSize: 1024  # Enables response compression for API responses larger than 1 KB to reduce costs
+  FastAPILambdaFunction:
+    Type: AWS::Serverless::Function  # This defines a Lambda function using the SAM model
+    Properties:
+      PackageType: Image  # The Lambda function will be packaged as a Docker image
       Architectures:
-        - x86_64
-      Timeout: 30
-      Policies: AWSLambdaBasicExecutionRole
+        - x86_64  # Use the ARMx86_64 architecture 
+      Timeout: 10  # The Lambda function is allowed to run for a maximum of 10 seconds before timing out
+      MemorySize: 128  # The function will be allocated 128 MB of memory. You can adjust this to reduce costs
+      EphemeralStorage:
+        Size: 512  # Allocates temporary storage space (in MB) for Lambda to use during execution, reducing overhead
+      ReservedConcurrentExecutions: 10  # Limits the number of concurrent executions for the function to 10, to control costs
+      Policies: AWSLambdaBasicExecutionRole  # Grants the Lambda function the basic execution role (e.g., CloudWatch logs access)
       Events:
         FastAPIProxy:
-          Type: Api
+          Type: Api  # This triggers the Lambda function via an API Gateway event
           Properties:
-            Path: /{proxy+}  # Redireciona todas as rotas para a Lambda
-            Method: ANY      # Permite todos os métodos HTTP
+            Path: /{proxy+}  # Any path under the root will trigger this function
+            Method: ANY  # Allows any HTTP method to trigger the function (GET, POST, etc.)
+            RestApiId:
+              Ref: FastAPIProxyApi # Reference the API Gateway resource above
     Metadata:
-      Dockerfile: Dockerfile   # Caminho relativo para o Dockerfile
-      DockerContext: ./lambda          # Diretório de contexto para o build
-      DockerTag: fastapi-lambda
+      Dockerfile: Dockerfile  # Points to the Dockerfile used to build the Lambda function’s image
+      DockerContext: ./lambda  # The directory containing the source code for the Lambda function (relative path)
+      DockerTag: fastapi-lambda  # The tag for the Docker image that will be used for the Lambda function
+
+
+Outputs:  # Outputs section to provide information about the deployed resources
+  LambdaFunctionArn:
+    Description: "ARN of the deployed Lambda function"  # A description of what this output represents
+    Value: !GetAtt FastAPILambdaFunction.Arn  # The ARN (Amazon Resource Name) of the Lambda function, which uniquely identifies it
+
+  ApiEndpoint:
+    Description: "The URL of the API Gateway endpoint"  # A description of what this output represents
+    Value: !Sub "https://${FastAPIProxy}.execute-api.${AWS::Region}.amazonaws.com/${FastAPIProxy.StageName}/"  # Constructs the API Gateway URL dynamically
