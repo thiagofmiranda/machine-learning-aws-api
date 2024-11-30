@@ -1,44 +1,75 @@
-AWSTemplateFormatVersion: '2010-09-09'  # Specifies the version of the CloudFormation template format
+AWSTemplateFormatVersion: '2010-09-09'
 
-Transform: AWS::Serverless-2016-10-31  # Tells AWS that this is a SAM template and enables SAM-specific functionality
+Transform: AWS::Serverless-2016-10-31
 
-Resources:  # This section defines all the resources that will be created in AWS
-  FastAPIProxyApi:  # Define the API Gateway separately
+Resources:
+  FastAPIProxyApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: dev  # Specify the stage name (e.g., dev, prod) for the API
-      MinimumCompressionSize: 1024  # Enables response compression for API responses larger than 1 KB to reduce costs
+      StageName: dev
+      DefinitionBody:
+        openapi: "3.0.1"
+        info:
+          title: "FastAPI"
+          version: "1.0"
+        paths:
+          /{proxy+}:
+            x-amazon-apigateway-any-method:
+              responses:
+                default:
+                  statusCode: "200"
+                  responseParameters:
+                    method.response.header.Access-Control-Allow-Origin: "'*'"
+                    method.response.header.Access-Control-Allow-Methods: "'OPTIONS,GET,POST'"
+                    method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FastAPILambdaFunction.Arn}/invocations"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+
   FastAPILambdaFunction:
-    Type: AWS::Serverless::Function  # This defines a Lambda function using the SAM model
+    Type: AWS::Serverless::Function
     Properties:
-      PackageType: Image  # The Lambda function will be packaged as a Docker image
+      PackageType: Image
       Architectures:
-        - x86_64  # Use the ARMx86_64 architecture 
-      Timeout: 10  # The Lambda function is allowed to run for a maximum of 10 seconds before timing out
-      MemorySize: 128  # The function will be allocated 128 MB of memory. You can adjust this to reduce costs
+        - x86_64
+      Timeout: 10
+      MemorySize: 128
       EphemeralStorage:
-        Size: 512  # Allocates temporary storage space (in MB) for Lambda to use during execution, reducing overhead
-      ReservedConcurrentExecutions: 10  # Limits the number of concurrent executions for the function to 10, to control costs
-      Policies: AWSLambdaBasicExecutionRole  # Grants the Lambda function the basic execution role (e.g., CloudWatch logs access)
+        Size: 512
+      ReservedConcurrentExecutions: 10
+      Policies: AWSLambdaBasicExecutionRole
       Events:
         FastAPIProxy:
-          Type: Api  # This triggers the Lambda function via an API Gateway event
+          Type: Api
           Properties:
-            Path: /{proxy+}  # Any path under the root will trigger this function
-            Method: ANY  # Allows any HTTP method to trigger the function (GET, POST, etc.)
+            Path: /{proxy+}
+            Method: ANY
             RestApiId:
-              Ref: FastAPIProxyApi # Reference the API Gateway resource above
+              Ref: FastAPIProxyApi
     Metadata:
-      Dockerfile: Dockerfile  # Points to the Dockerfile used to build the Lambda function’s image
-      DockerContext: ./lambda  # The directory containing the source code for the Lambda function (relative path)
-      DockerTag: fastapi-lambda  # The tag for the Docker image that will be used for the Lambda function
+      Dockerfile: Dockerfile
+      DockerContext: ./lambda
+      DockerTag: fastapi-lambda
 
 
-Outputs:  # Outputs section to provide information about the deployed resources
-  LambdaFunctionArn:
-    Description: "ARN of the deployed Lambda function"  # A description of what this output represents
-    Value: !GetAtt FastAPILambdaFunction.Arn  # The ARN (Amazon Resource Name) of the Lambda function, which uniquely identifies it
-
+Outputs:
   ApiEndpoint:
-    Description: "The URL of the API Gateway endpoint"  # A description of what this output represents
-    Value: !Sub "https://${FastAPIProxy}.execute-api.${AWS::Region}.amazonaws.com/${FastAPIProxy.StageName}/"  # Constructs the API Gateway URL dynamically
+    Description: "URL do endpoint da API Gateway"
+    Value: !Sub "https://${FastAPIProxyApi}.execute-api.${AWS::Region}.amazonaws.com/dev"
+    Export:
+      Name: ApiEndpoint
+
+  LambdaFunctionArn:
+    Description: "ARN da função Lambda"
+    Value: !GetAtt FastAPILambdaFunction.Arn
+    Export:
+      Name: LambdaFunctionArn
+
+  LambdaFunctionName:
+    Description: "Nome da função Lambda"
+    Value: !Ref FastAPILambdaFunction
+    Export:
+      Name: LambdaFunctionName
